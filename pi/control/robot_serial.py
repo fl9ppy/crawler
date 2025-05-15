@@ -5,7 +5,7 @@ class RobotSerial:
     def __init__(self, port="/dev/ttyUSB0", baudrate=9600):
         try:
             self.ser = serial.Serial(port, baudrate, timeout=1)
-            time.sleep(2)  # Let Arduino boot
+            time.sleep(2)  # For the arduino boot 
             print("[RobotSerial] Connected to Arduino.")
         except serial.SerialException as e:
             print(f"[ERROR] Could not open serial port: {e}")
