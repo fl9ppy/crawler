@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RescueBot Control Panel</title>
+    <style>
+        body { font-family: Arial; background: #111; color: #eee; text-align: center; }
+        button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+        .video-feed { margin-top: 15px; border: 2px solid #444; }
+        input[type=range] { width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>RescueBot Remote Control</h1>
+
+    <div>
+        <button onclick="sendMove('FWD')">Forward</button><br>
+        <button onclick="sendMove('LEFT')">Left</button>
+        <button onclick="sendMove('STOP')">Stop</button>
+        <button onclick="sendMove('RIGHT')">Right</button><br>
+        <button onclick="sendMove('BACK')">Backward</button>
+    </div>
+
+    <h3>Camera Pan / Tilt</h3>
+    <label>Pan:
+        <input type="range" id="pan" min="0" max="180" value="90" onchange="moveCamera()">
+    </label>
+    <label>Tilt:
+        <input type="range" id="tilt" min="0" max="180" value="90" onchange="moveCamera()">
+    </label>
+
+    <h3>Live Camera Feed</h3>
+    <img src="/video_feed" class="video-feed" width="640" height="480">
+
+    <h3>Distance Sensor</h3>
+    <p id="distance">Loading...</p>
+
+    <script>
+        function sendMove(direction) {
+            fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "direction=" + direction
+            });
+        }
+
+        function moveCamera() {
+            let pan = document.getElementById("pan").value;
+            let tilt = document.getElementById("tilt").value;
+
+            fetch("/camera", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `pan=${pan}&tilt=${tilt}`
+            });
+        }
+
+        function updateDistance() {
+            fetch("/distance")
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("distance").textContent = `${data.distance_cm.toFixed(1)} cm`;
+                });
+        }
+
+        setInterval(updateDistance, 1000);
+    </script>
+</body>
+</html>
+
