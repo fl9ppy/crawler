@@ -10,7 +10,7 @@ const int MOTOR_B_IN2 = 4;
 const int SERVO_PAN_PIN = 9;
 const int SERVO_TILT_PIN = 10;
 
-// Ultrasonic pins
+// Ultrasound pins
 const int TRIG_PIN = 6;
 const int ECHO_PIN = 7;
 
@@ -98,4 +98,3 @@ float readDistance() {
   long duration = pulseIn(ECHO_PIN, HIGH, 30000);
   return duration * 0.034 / 2;
 }
-

@@ -12,4 +12,3 @@ User=anakin-skywalker
 
 [Install]
 WantedBy=multi-user.target
-
