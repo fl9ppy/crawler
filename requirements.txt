@@ -2,3 +2,4 @@ flask
 pyserial
 opencv-python
 numpy
+pyyaml

@@ -3,9 +3,11 @@ import cv2
 class VideoCamera:
     def __init__(self, config):
         self.stream = cv2.VideoCapture(0)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, config["camera"]["resolution"][0])
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, config["camera"]["resolution"][1])
-        self.stream.set(cv2.CAP_PROP_FPS, config["camera"]["framerate"])
+        width, height = config["camera"]["resolution"]
+        fps = config["camera"]["framerate"]
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.stream.set(cv2.CAP_PROP_FPS, fps)
 
         cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         self.face_cascade = cv2.CascadeClassifier(cascade_path)
@@ -19,14 +21,10 @@ class VideoCamera:
             return None
 
         self.frame_count += 1
-
         if self.frame_count % 15 == 0:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             self.face_boxes = self.face_cascade.detectMultiScale(
-                gray,
-                scaleFactor=1.1,
-                minNeighbors=5,
-                minSize=(30, 30)
+                gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
             )
 
         for (x, y, w, h) in self.face_boxes:

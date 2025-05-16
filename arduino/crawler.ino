@@ -1,40 +1,33 @@
 #include <AFMotor.h>
 #include <Servo.h>
 
-// Motor connections (M1 and M2 on shield)
-AF_DCMotor motor1(1); // Left motor
-AF_DCMotor motor2(2); // Right motor
+// DC motors
+AF_DCMotor motor1(1);
+AF_DCMotor motor2(2);
 
-// Servos on shield (D9 and D10)
+// Servos
 Servo servoPan;
 Servo servoTilt;
 
-// Ultrasonic sensor
-const int TRIG_PIN = 6;
-const int ECHO_PIN = 7;
+// Pins (configurable via serial)
+int TRIG_PIN = 6;
+int ECHO_PIN = 7;
+int PAN_PIN = 9;
+int TILT_PIN = 10;
 
 void setup() {
   Serial.begin(9600);
 
-  // Motor setup
   motor1.setSpeed(200);
   motor2.setSpeed(200);
   stopMotors();
-
-  // Attach servos on shield
-  servoPan.attach(9);  // Servo1 on shield
-  servoTilt.attach(10); // Servo2 on shield
-
-  // Ultrasonic setup
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
 
   Serial.println("ARDUINO READY");
 }
 
 void loop() {
   if (Serial.available()) {
-    String command = Serial.readStringUntil('\\n');
+    String command = Serial.readStringUntil('\n');
     command.trim();
 
     if (command == "FWD") moveForward();
@@ -51,11 +44,40 @@ void loop() {
       float dist = readDistance();
       Serial.print("DIST ");
       Serial.println(dist);
+    } else if (command.startsWith("CONFIG")) {
+      parseConfig(command);
     }
   }
 }
 
-// Motor control
+// CONFIG TRIG=6 ECHO=7 PAN=9 TILT=10
+void parseConfig(String cmd) {
+  int trig = cmd.indexOf("TRIG=");
+  int echo = cmd.indexOf("ECHO=");
+  int pan  = cmd.indexOf("PAN=");
+  int tilt = cmd.indexOf("TILT=");
+
+  if (trig != -1) TRIG_PIN = cmd.substring(trig + 5, cmd.indexOf(" ", trig + 5)).toInt();
+  if (echo != -1) ECHO_PIN = cmd.substring(echo + 5, cmd.indexOf(" ", echo + 5)).toInt();
+  if (pan  != -1) PAN_PIN  = cmd.substring(pan + 4, cmd.indexOf(" ", pan + 4)).toInt();
+  if (tilt != -1) TILT_PIN = cmd.substring(tilt + 5).toInt();
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  servoPan.attach(PAN_PIN);
+  servoTilt.attach(TILT_PIN);
+
+  Serial.print("CONFIG_OK TRIG=");
+  Serial.print(TRIG_PIN);
+  Serial.print(" ECHO=");
+  Serial.print(ECHO_PIN);
+  Serial.print(" PAN=");
+  Serial.print(PAN_PIN);
+  Serial.print(" TILT=");
+  Serial.println(TILT_PIN);
+}
+
 void moveForward() {
   motor1.run(FORWARD);
   motor2.run(FORWARD);
@@ -81,7 +103,6 @@ void stopMotors() {
   motor2.run(RELEASE);
 }
 
-// Ultrasonic distance
 float readDistance() {
   digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);

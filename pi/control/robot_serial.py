@@ -2,21 +2,31 @@ import serial
 import time
 
 class RobotSerial:
-    def __init__(self, port="/dev/ttyUSB0", baudrate=9600):
-        try:
-            self.ser = serial.Serial(port, baudrate, timeout=1)
-            time.sleep(2)  # For the arduino boot 
-            print("[RobotSerial] Connected to Arduino.")
-        except serial.SerialException as e:
-            print(f"[ERROR] Could not open serial port: {e}")
-            self.ser = None
+    def __init__(self, config):
+        port = config["serial"]["port"]
+        baudrate = config["serial"]["baudrate"]
+        self.ser = serial.Serial(port, baudrate, timeout=1)
+        time.sleep(2)
+        print("[RobotSerial] Connected")
+
+        # Send dynamic pin config
+        trig = config["pins"]["trig"]
+        echo = config["pins"]["echo"]
+        pan_pin = config["pins"]["pan"]
+        tilt_pin = config["pins"]["tilt"]
+        self.send(f"CONFIG TRIG={trig} ECHO={echo} PAN={pan_pin} TILT={tilt_pin}")
+        time.sleep(0.1)
+
+        # Send initial servo position
+        pan = config["servos"].get("pan_start", 90)
+        tilt = config["servos"].get("tilt_start", 90)
+        self.set_servo(pan, tilt)
 
     def send(self, command):
-        if self.ser:
-            self.ser.write((command + "\n").encode())
+        self.ser.write((command + "\n").encode())
 
     def read_line(self):
-        if self.ser and self.ser.in_waiting:
+        if self.ser.in_waiting:
             return self.ser.readline().decode().strip()
         return None
 
