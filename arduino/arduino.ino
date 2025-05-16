@@ -1,32 +1,31 @@
+#include <AFMotor.h>
 #include <Servo.h>
 
-// Motor pins
-const int MOTOR_A_IN1 = 3;
-const int MOTOR_A_IN2 = 2;
-const int MOTOR_B_IN1 = 5;
-const int MOTOR_B_IN2 = 4;
+// Motor connections (M1 and M2 on shield)
+AF_DCMotor motor1(1); // Left motor
+AF_DCMotor motor2(2); // Right motor
 
-// Servo pins
-const int SERVO_PAN_PIN = 9;
-const int SERVO_TILT_PIN = 10;
+// Servos on shield (D9 and D10)
+Servo servoPan;
+Servo servoTilt;
 
-// Ultrasound pins
+// Ultrasonic sensor
 const int TRIG_PIN = 6;
 const int ECHO_PIN = 7;
-
-Servo servoPan, servoTilt;
 
 void setup() {
   Serial.begin(9600);
 
-  pinMode(MOTOR_A_IN1, OUTPUT);
-  pinMode(MOTOR_A_IN2, OUTPUT);
-  pinMode(MOTOR_B_IN1, OUTPUT);
-  pinMode(MOTOR_B_IN2, OUTPUT);
+  // Motor setup
+  motor1.setSpeed(200);
+  motor2.setSpeed(200);
+  stopMotors();
 
-  servoPan.attach(SERVO_PAN_PIN);
-  servoTilt.attach(SERVO_TILT_PIN);
+  // Attach servos on shield
+  servoPan.attach(9);  // Servo1 on shield
+  servoTilt.attach(10); // Servo2 on shield
 
+  // Ultrasonic setup
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
@@ -56,41 +55,33 @@ void loop() {
   }
 }
 
+// Motor control
 void moveForward() {
-  digitalWrite(MOTOR_A_IN1, HIGH);
-  digitalWrite(MOTOR_A_IN2, LOW);
-  digitalWrite(MOTOR_B_IN1, HIGH);
-  digitalWrite(MOTOR_B_IN2, LOW);
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
 }
 
 void moveBackward() {
-  digitalWrite(MOTOR_A_IN1, LOW);
-  digitalWrite(MOTOR_A_IN2, HIGH);
-  digitalWrite(MOTOR_B_IN1, LOW);
-  digitalWrite(MOTOR_B_IN2, HIGH);
+  motor1.run(BACKWARD);
+  motor2.run(BACKWARD);
 }
 
 void turnLeft() {
-  digitalWrite(MOTOR_A_IN1, LOW);
-  digitalWrite(MOTOR_A_IN2, HIGH);
-  digitalWrite(MOTOR_B_IN1, HIGH);
-  digitalWrite(MOTOR_B_IN2, LOW);
+  motor1.run(BACKWARD);
+  motor2.run(FORWARD);
 }
 
 void turnRight() {
-  digitalWrite(MOTOR_A_IN1, HIGH);
-  digitalWrite(MOTOR_A_IN2, LOW);
-  digitalWrite(MOTOR_B_IN1, LOW);
-  digitalWrite(MOTOR_B_IN2, HIGH);
+  motor1.run(FORWARD);
+  motor2.run(BACKWARD);
 }
 
 void stopMotors() {
-  digitalWrite(MOTOR_A_IN1, LOW);
-  digitalWrite(MOTOR_A_IN2, LOW);
-  digitalWrite(MOTOR_B_IN1, LOW);
-  digitalWrite(MOTOR_B_IN2, LOW);
+  motor1.run(RELEASE);
+  motor2.run(RELEASE);
 }
 
+// Ultrasonic distance
 float readDistance() {
   digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
@@ -98,3 +89,4 @@ float readDistance() {
   long duration = pulseIn(ECHO_PIN, HIGH, 30000);
   return duration * 0.034 / 2;
 }
+
