@@ -1,0 +1,22 @@
+name: crawler
+
+mode: remote
+
+serial:
+  port: /dev/ttyUSB0
+  baudrate: 9600
+
+camera:
+  resolution: [640, 480]
+  framerate: 30
+
+pins:
+  trig: 6
+  echo: 7
+  pan: 9
+  tilt: 10
+
+servos:
+  pan_start: 90
+  tilt_start: 90
+
