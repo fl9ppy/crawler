@@ -6,13 +6,23 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             background-color: #1c1c1c;
             color: white;
+            margin: 0;
+            padding: 0;
         }
 
-        .container {
-            margin-top: 30px;
+        .layout {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .arrow-grid {
@@ -21,59 +31,78 @@
             grid-template-rows: 60px 60px 60px;
             justify-content: center;
             align-items: center;
-            margin: 10px;
+            gap: 5px;
         }
 
         .arrow-grid button {
             width: 60px;
             height: 60px;
             font-size: 24px;
+            background-color: #333;
+            color: white;
+            border: 2px solid #444;
+            border-radius: 10px;
+        }
+
+        .arrow-grid button:active {
+            background-color: #555;
         }
 
         img {
-            margin-top: 20px;
             border: 2px solid #444;
         }
 
         h2 {
-            margin-top: 40px;
+            margin: 10px;
+        }
+
+        p {
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>Crawler Robot Controller</h1>
+    <h1 style="text-align: center;">Crawler Robot Controller</h1>
 
-    <div class="container">
-        <h2>Camera Feed</h2>
-        <img src="/video_feed" width="640" height="480" />
-
-        <h2>Camera Pan/Tilt (Arrow Keys or Buttons)</h2>
-        <div class="arrow-grid">
-            <div></div>
-            <button onclick="adjustTilt(-10)">⬆️</button>
-            <div></div>
-            <button onclick="adjustPan(-10)">⬅️</button>
-            <div></div>
-            <button onclick="adjustPan(10)">➡️</button>
-            <div></div>
-            <button onclick="adjustTilt(10)">⬇️</button>
-            <div></div>
+    <div class="layout">
+        <!-- Left - Motor Control -->
+        <div class="column">
+            <h2>Robot Movement</h2>
+            <div class="arrow-grid" id="motor-arrows">
+                <div></div>
+                <button onmousedown="startMove('FWD')" onmouseup="stopMove()" ontouchstart="startMove('FWD')" ontouchend="stopMove()">⬆️</button>
+                <div></div>
+                <button onmousedown="startMove('LEFT')" onmouseup="stopMove()" ontouchstart="startMove('LEFT')" ontouchend="stopMove()">⬅️</button>
+                <div></div>
+                <button onmousedown="startMove('RIGHT')" onmouseup="stopMove()" ontouchstart="startMove('RIGHT')" ontouchend="stopMove()">➡️</button>
+                <div></div>
+                <button onmousedown="startMove('BACK')" onmouseup="stopMove()" ontouchstart="startMove('BACK')" ontouchend="stopMove()">⬇️</button>
+                <div></div>
+            </div>
         </div>
 
-        <h2>Robot Movement (WASD or Buttons)</h2>
-        <div class="arrow-grid">
-            <div></div>
-            <button onclick="sendDirection('FWD')">⬆️</button>
-            <div></div>
-            <button onclick="sendDirection('LEFT')">⬅️</button>
-            <div></div>
-            <button onclick="sendDirection('RIGHT')">➡️</button>
-            <div></div>
-            <button onclick="sendDirection('BACK')">⬇️</button>
-            <div></div>
+        <!-- Center - Camera Feed -->
+        <div class="column">
+            <h2>Live Camera</h2>
+            <img src="/video_feed" width="640" height="480" />
+            <p>Use <strong>W/A/S/D</strong> or motor arrows to move. Arrow keys or camera arrows to aim.</p>
         </div>
 
-        <p>Use <strong>W / A / S / D</strong> to drive. Arrow keys control camera. Releasing movement key sends STOP.</p>
+        <!-- Right - Camera Control -->
+        <div class="column">
+            <h2>Camera Pan/Tilt</h2>
+            <div class="arrow-grid">
+                <div></div>
+                <button onclick="adjustTilt(-10)">⬆️</button>
+                <div></div>
+                <button onclick="adjustPan(-10)">⬅️</button>
+                <div></div>
+                <button onclick="adjustPan(10)">➡️</button>
+                <div></div>
+                <button onclick="adjustTilt(10)">⬇️</button>
+                <div></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -81,7 +110,7 @@
         let panAngle = 90;
         let tiltAngle = 90;
 
-        // WASD controls for movement
+        // Keyboard movement control
         document.addEventListener("keydown", (e) => {
             const k = e.key.toLowerCase();
             let dir = null;
@@ -95,7 +124,7 @@
                 sendDirection(dir);
             }
 
-            // Arrow key camera control
+            // Arrow keys for camera
             if (e.key === "ArrowLeft") adjustPan(-10);
             if (e.key === "ArrowRight") adjustPan(10);
             if (e.key === "ArrowUp") adjustTilt(-10);
@@ -109,6 +138,19 @@
                 sendDirection("STOP");
             }
         });
+
+        // Mouse/touch hold buttons
+        function startMove(dir) {
+            currentDirection = dir;
+            sendDirection(dir);
+        }
+
+        function stopMove() {
+            if (currentDirection !== "STOP") {
+                sendDirection("STOP");
+                currentDirection = "STOP";
+            }
+        }
 
         function sendDirection(dir) {
             fetch("/move", {
