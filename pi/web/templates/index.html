@@ -19,13 +19,29 @@
             margin-top: 20px;
         }
 
-        input[type="range"] {
-            width: 200px;
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 18px;
         }
 
-        video {
-            border: 2px solid #444;
+        .arrow-grid {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            justify-content: center;
+            align-items: center;
             margin-top: 20px;
+        }
+
+        .arrow-grid button {
+            width: 60px;
+            height: 60px;
+        }
+
+        img {
+            margin-top: 20px;
+            border: 2px solid #444;
         }
     </style>
 </head>
@@ -38,15 +54,17 @@
 
         <div class="servo-control">
             <h2>Camera Pan/Tilt</h2>
-            <label>Pan:
-                <input type="range" id="pan" min="0" max="180" value="90">
-            </label>
-            <br>
-            <label>Tilt:
-                <input type="range" id="tilt" min="0" max="180" value="90">
-            </label>
-            <br><br>
-            <button onclick="sendCamera()">Send Camera Position</button>
+            <div class="arrow-grid">
+                <div></div>
+                <button onclick="adjustTilt(-10)">⬆️</button>
+                <div></div>
+                <button onclick="adjustPan(-10)">⬅️</button>
+                <div></div>
+                <button onclick="adjustPan(10)">➡️</button>
+                <div></div>
+                <button onclick="adjustTilt(10)">⬇️</button>
+                <div></div>
+            </div>
         </div>
 
         <p style="margin-top: 40px;">Use <strong>W / A / S / D</strong> keys to move. Release to stop.</p>
@@ -54,6 +72,8 @@
 
     <script>
         let currentDirection = "";
+        let panAngle = 90;
+        let tiltAngle = 90;
 
         document.addEventListener("keydown", (e) => {
             let dir = null;
@@ -81,13 +101,23 @@
             }
         });
 
-        function sendCamera() {
-            const pan = document.getElementById("pan").value;
-            const tilt = document.getElementById("tilt").value;
+        function adjustPan(delta) {
+            panAngle = Math.min(180, Math.max(0, panAngle + delta));
+            sendCamera();
+        }
 
+        function adjustTilt(delta) {
+            tiltAngle = Math.min(180, Math.max(0, tiltAngle + delta));
+            sendCamera();
+        }
+
+        function sendCamera() {
             fetch("/camera", {
                 method: "POST",
-                body: new URLSearchParams({ pan, tilt })
+                body: new URLSearchParams({
+                    pan: panAngle,
+                    tilt: tiltAngle
+                })
             });
         }
     </script>
