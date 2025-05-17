@@ -15,7 +15,7 @@
         .layout {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
         }
 
@@ -23,6 +23,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex: 1;
         }
 
         .arrow-grid {
@@ -50,6 +51,7 @@
 
         img {
             border: 2px solid #444;
+            margin-bottom: 10px;
         }
 
         h2 {
@@ -65,10 +67,10 @@
     <h1 style="text-align: center;">Crawler Robot Controller</h1>
 
     <div class="layout">
-        <!-- Left - Motor Control -->
+        <!-- Left - Robot Movement -->
         <div class="column">
             <h2>Robot Movement</h2>
-            <div class="arrow-grid" id="motor-arrows">
+            <div class="arrow-grid">
                 <div></div>
                 <button onmousedown="startMove('FWD')" onmouseup="stopMove()" ontouchstart="startMove('FWD')" ontouchend="stopMove()">⬆️</button>
                 <div></div>
@@ -81,14 +83,16 @@
             </div>
         </div>
 
-        <!-- Center - Camera Feed -->
+        <!-- Center - Camera Feed and Distance -->
         <div class="column">
             <h2>Live Camera</h2>
             <img src="/video_feed" width="640" height="480" />
+            <h2>Ultrasonic Distance</h2>
+            <p id="distance-value">Reading...</p>
             <p>Use <strong>W/A/S/D</strong> or motor arrows to move. Arrow keys or camera arrows to aim.</p>
         </div>
 
-        <!-- Right - Camera Control -->
+        <!-- Right - Camera Pan/Tilt -->
         <div class="column">
             <h2>Camera Pan/Tilt</h2>
             <div class="arrow-grid">
@@ -110,7 +114,6 @@
         let panAngle = 90;
         let tiltAngle = 90;
 
-        // Keyboard movement control
         document.addEventListener("keydown", (e) => {
             const k = e.key.toLowerCase();
             let dir = null;
@@ -124,7 +127,6 @@
                 sendDirection(dir);
             }
 
-            // Arrow keys for camera
             if (e.key === "ArrowLeft") adjustPan(-10);
             if (e.key === "ArrowRight") adjustPan(10);
             if (e.key === "ArrowUp") adjustTilt(-10);
@@ -139,7 +141,6 @@
             }
         });
 
-        // Mouse/touch hold buttons
         function startMove(dir) {
             currentDirection = dir;
             sendDirection(dir);
@@ -178,6 +179,21 @@
                 })
             });
         }
+
+        function updateDistance() {
+            fetch("/distance")
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("distance-value").innerText =
+                        `${data.distance_cm.toFixed(1)} cm`;
+                })
+                .catch(() => {
+                    document.getElementById("distance-value").innerText = "Error";
+                });
+        }
+
+        setInterval(updateDistance, 1000);
+        updateDistance();
     </script>
 </body>
 </html>
