@@ -2,134 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RescueBot Control Panel</title>
+    <title>Crawler Control Panel</title>
     <style>
         body {
-            font-family: Arial;
-            background: #111;
-            color: #eee;
+            font-family: Arial, sans-serif;
             text-align: center;
+            background-color: #1c1c1c;
+            color: white;
         }
 
-        button {
-            margin: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
+        .container {
+            margin-top: 30px;
         }
 
-        .video-feed {
-            margin-top: 15px;
-            border: 2px solid #444;
+        .servo-control {
+            margin-top: 20px;
         }
 
-        .servo-controls button {
-            width: 50px;
-        }
-
-        input[type=range] {
+        input[type="range"] {
             width: 200px;
+        }
+
+        video {
+            border: 2px solid #444;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>RescueBot Remote Control</h1>
+    <h1>Crawler Robot Controller</h1>
 
-    <div>
-        <button onclick="sendMove('FWD')">Forward (W)</button><br>
-        <button onclick="sendMove('LEFT')">Left (A)</button>
-        <button onclick="sendMove('STOP')">Stop (Space)</button>
-        <button onclick="sendMove('RIGHT')">Right (D)</button><br>
-        <button onclick="sendMove('BACK')">Backward (S)</button>
+    <div class="container">
+        <h2>Camera Feed</h2>
+        <img src="/video_feed" width="640" height="480" />
+
+        <div class="servo-control">
+            <h2>Camera Pan/Tilt</h2>
+            <label>Pan:
+                <input type="range" id="pan" min="0" max="180" value="90">
+            </label>
+            <br>
+            <label>Tilt:
+                <input type="range" id="tilt" min="0" max="180" value="90">
+            </label>
+            <br><br>
+            <button onclick="sendCamera()">Send Camera Position</button>
+        </div>
+
+        <p style="margin-top: 40px;">Use <strong>W / A / S / D</strong> keys to move. Release to stop.</p>
     </div>
-
-    <h3>Camera Pan / Tilt</h3>
-    <div class="servo-controls">
-        <p>
-            Pan:
-            <button onclick="adjustPan(-10)">◀️</button>
-            <span id="panDisplay">90</span>
-            <button onclick="adjustPan(10)">▶️</button>
-        </p>
-        <p>
-            Tilt:
-            <button onclick="adjustTilt(-10)">🔼</button>
-            <span id="tiltDisplay">90</span>
-            <button onclick="adjustTilt(10)">🔽</button>
-        </p>
-    </div>
-
-    <h3>Live Camera Feed</h3>
-    <img src="/video_feed" class="video-feed" width="640" height="480">
-
-    <h3>Distance Sensor</h3>
-    <p id="distance">Loading...</p>
-
-    <p style="margin-top: 20px;">
-        Use <strong>W/A/S/D</strong> to move, <strong>Space</strong> to stop.
-    </p>
 
     <script>
-        let pan = 90;
-        let tilt = 90;
+        let currentDirection = "";
 
-        function sendMove(direction) {
-            fetch("/move", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "direction=" + direction
-            });
-        }
+        document.addEventListener("keydown", (e) => {
+            let dir = null;
+            if (e.key === "w") dir = "FWD";
+            if (e.key === "s") dir = "BACK";
+            if (e.key === "a") dir = "LEFT";
+            if (e.key === "d") dir = "RIGHT";
 
-        function sendServo() {
-            fetch("/camera", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `pan=${pan}&tilt=${tilt}`
-            });
-
-            document.getElementById("panDisplay").textContent = pan;
-            document.getElementById("tiltDisplay").textContent = tilt;
-        }
-
-        function adjustPan(amount) {
-            pan = Math.max(0, Math.min(180, pan + amount));
-            sendServo();
-        }
-
-        function adjustTilt(amount) {
-            tilt = Math.max(0, Math.min(180, tilt + amount));
-            sendServo();
-        }
-
-        function updateDistance() {
-            fetch("/distance")
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById("distance").textContent = `${data.distance_cm.toFixed(1)} cm`;
+            if (dir && dir !== currentDirection) {
+                currentDirection = dir;
+                fetch("/move", {
+                    method: "POST",
+                    body: new URLSearchParams({ direction: dir })
                 });
-        }
-
-        setInterval(updateDistance, 1000);
-
-        document.addEventListener("keydown", function (event) {
-            switch (event.key.toLowerCase()) {
-                case "w":
-                    sendMove("FWD");
-                    break;
-                case "s":
-                    sendMove("BACK");
-                    break;
-                case "a":
-                    sendMove("LEFT");
-                    break;
-                case "d":
-                    sendMove("RIGHT");
-                    break;
-                case " ":
-                    sendMove("STOP");
-                    break;
             }
         });
+
+        document.addEventListener("keyup", (e) => {
+            if (["w", "a", "s", "d"].includes(e.key.toLowerCase()) && currentDirection !== "STOP") {
+                currentDirection = "STOP";
+                fetch("/move", {
+                    method: "POST",
+                    body: new URLSearchParams({ direction: "STOP" })
+                });
+            }
+        });
+
+        function sendCamera() {
+            const pan = document.getElementById("pan").value;
+            const tilt = document.getElementById("tilt").value;
+
+            fetch("/camera", {
+                method: "POST",
+                body: new URLSearchParams({ pan, tilt })
+            });
+        }
     </script>
 </body>
 </html>
